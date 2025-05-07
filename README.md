@@ -24,7 +24,7 @@ O **Aurory Bot** é um projeto aberto criado para aprendizado e colaboração. A
 ## 🛠️ Instalação e Execução  
 1. Clone o repositório:  
    ```bash
-   git clone https://github.com/seu-usuario/aurory-bot.git
+   git clone https://github.com/AuryChat/aurory-bott.git
    ```
 2. Instale as dependências:
    ```bash
