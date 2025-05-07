@@ -1,76 +1,27 @@
-import {
-    Client,
-    Events,
-    GatewayIntentBits,
-    REST,
-    Routes,
-    ChannelType,
-    SlashCommandBuilder,
-    PermissionsBitField
-} from "discord.js";
-import dotenv from "dotenv";
+import { Client, GatewayIntentBits } from 'discord.js';
+import dotenv from 'dotenv';
+import fs from 'node:fs';
+import path from 'node:path';
+
 dotenv.config();
-
-const commands = [
-    new SlashCommandBuilder()
-        .setName('ping')
-        .setDescription('Return pong'),
-
-    new SlashCommandBuilder()
-        .setName('createchannel')
-        .setDescription('Create a channel')
-        .addStringOption(option =>
-            option.setName('name')
-                .setDescription('The name of the channel')
-                .setRequired(true)
-        )
-];
-
-const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
-
-async function main() {
-    try {
-        console.log("Started refreshing application (/ or !) commands.");
-        await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
-        console.log("Successfully reloaded application (/ or !) commands.");
-    } catch (error) {
-        console.error(error);
-    }
-}
-main();
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.on(Events.ClientReady, () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-})
+const eventsPath = path.join('./events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-client.on(Events.InteractionCreate, async interaction => {
-    const botAdmin = interaction.guild.members.me;
-    if (botAdmin.permissions.has(PermissionsBitField.Flags.Administrator)) {
-
-        if (interaction.commandName === "ping") {
-            await interaction.reply("Pong!");
-        }
-
-        if (interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            if (interaction.commandName === "createchannel") {
-                await interaction.reply("Creating channel...");
-
-                await interaction.guild.channels.create({
-                    name: `${interaction.options.getString("name")}`,
-                    type: ChannelType.GuildText,
-                    reason: `Criado por ${interaction.user.tag} via comando!`
-                });
-
-                await interaction.editReply("Channel created!");
-            }
-        } else {
-            await interaction.reply("You don't have permission to use this command!");
-        }
+for (const file of eventFiles) {
+    const event = (await import(`./events/${file}`)).default;
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args));
     } else {
-        await interaction.reply("I don't have permission to use this command!");
+        client.on(event.name, (...args) => event.execute(...args));
     }
-});
+}
 
-client.login(process.env.TOKEN);
+try {
+    client.login(process.env.TOKEN);
+    console.log("Server is on")
+} catch (error) {
+    console.error(error);
+}
