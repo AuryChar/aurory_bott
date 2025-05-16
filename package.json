@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0",
+    "gitignore": "^0.7.0",
+    "mongodb": "^6.16.0"
+  },
+  "type": "module"
+}
